@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import beaconLogo from "@/assets/beacon-logo.png";
+import logo from '../assets/logobeacon.png';
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -18,16 +18,19 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md space-y-8 animate-fade-in">
-        {/* Logo */}
+        
+        {/* --- INICIO DAS ALTERAÇÕES --- */}
         <div className="flex flex-col items-center gap-2">
-          <img src={beaconLogo} alt="Beacon Navigator" className="w-24 h-24" />
-          <h1 className="font-display text-2xl font-bold text-foreground">
-            BEACON
-          </h1>
-          <span className="text-xs text-muted-foreground tracking-[0.3em] uppercase">
-            Navigator
-          </span>
+          {/* Aumentei de w-24 h-24 para w-64 h-64 (você pode testar w-56 ou w-72 se preferir) */}
+          <img 
+            src={logo} 
+            alt="Beacon Navigator" 
+            className="w-64 h-64 object-contain" 
+          />
+          
+          {/* AQUI EU REMOVI O H1 (BEACON) E O SPAN (NAVIGATOR) */}
         </div>
+        {/* --- FIM DAS ALTERAÇÕES --- */}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
