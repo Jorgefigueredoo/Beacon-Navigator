@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom"; // 1. Importei o hook de navegação
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchHeader } from "@/components/SearchHeader";
@@ -13,6 +14,8 @@ const beacons = [
 ];
 
 export default function Dashboard() {
+  const navigate = useNavigate(); // 2. Inicializei a função de navegar
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <SearchHeader />
@@ -29,9 +32,15 @@ export default function Dashboard() {
 
         {/* New Beacon Button */}
         <div className="flex justify-center">
-          <Button size="lg" className="animate-pulse-glow">
+          <Button 
+            size="lg" 
+            // 3. Adicionei o onClick para ir para a tela de novo beacon
+            onClick={() => navigate("/novo-beacon")}
+            // 4. Forcei a cor vermelha (bg-red-500) para ficar igual ao seu design
+            className="animate-pulse-glow bg-red-500 hover:bg-red-600 text-white border-0"
+          >
             Novo Beacon
-            <Plus className="w-5 h-5" />
+            <Plus className="w-5 h-5 ml-2" />
           </Button>
         </div>
 
