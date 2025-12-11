@@ -3,9 +3,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { User, Mail, Lock, Globe, Accessibility } from "lucide-react";
-import beaconLogo from "@/assets/beacon-logo.png";
+import { User, Mail, Lock, Globe } from "lucide-react"; // Removi o ícone Accessibility
+import logo from '../assets/logobeacon.png';
 
 export default function Cadastro() {
   const [formData, setFormData] = useState({
@@ -13,7 +12,7 @@ export default function Cadastro() {
     email: "",
     password: "",
     confirmPassword: "",
-    isPCD: false,
+    // Removi o isPCD do estado
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,13 +23,18 @@ export default function Cadastro() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md space-y-6 animate-fade-in">
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-1">
-          <img src={beaconLogo} alt="Beacon Navigator" className="w-16 h-16 opacity-60" />
-          <span className="font-display text-sm text-muted-foreground">BEACON</span>
+        
+        {/* Logo Grande */}
+        <div className="flex flex-col items-center gap-2">
+          <img 
+            src={logo} 
+            alt="Beacon Navigator" 
+            className="w-64 h-64 object-contain" 
+          />
         </div>
 
-        <h1 className="font-display text-2xl font-bold text-center text-foreground">
+        {/* Título Grande */}
+        <h1 className="font-display text-3xl font-bold text-center text-foreground">
           Cadastre-se
         </h1>
 
@@ -100,27 +104,14 @@ export default function Cadastro() {
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={() => setFormData({ ...formData, isPCD: !formData.isPCD })}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-full border transition-all ${
-                formData.isPCD
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-secondary text-foreground"
-              }`}
-            >
-              <Accessibility className="w-4 h-4" />
-              <span className="text-sm">Você é PCD?</span>
-            </button>
-            <button
-              type="button"
-              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-full border border-border bg-secondary text-foreground"
-            >
-              <Globe className="w-4 h-4" />
-              <span className="text-sm">Idioma</span>
-            </button>
-          </div>
+          {/* Botão de Idioma (Agora ocupa a largura total) */}
+          <button
+            type="button"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-full border border-border bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+          >
+            <Globe className="w-4 h-4" />
+            <span className="text-sm">Idioma</span>
+          </button>
 
           <Button type="submit" className="w-full" size="lg">
             Cadastrar
