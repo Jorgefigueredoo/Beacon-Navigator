@@ -1,18 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import beaconLogo from "@/assets/beacon-logo.png";
+import logo from '../assets/logobeacon.png';
 
 export default function Welcome() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md flex flex-col items-center gap-8 animate-fade-in">
-        {/* Illustration area */}
-        <div className="relative w-64 h-64 flex items-center justify-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl" />
-          <div className="relative z-10 w-48 h-48 bg-gradient-to-br from-primary/30 to-primary/10 rounded-3xl flex items-center justify-center">
-            <img src={beaconLogo} alt="Beacon Navigator" className="w-32 h-32" />
-          </div>
+        
+        {/* --- INICIO DO AJUSTE --- */}
+        <div className="flex items-center justify-center py-8">
+            {/* Aumentei de w-48 h-48 para w-64 h-64 */}
+            <img 
+              src={logo} 
+              alt="Beacon Navigator" 
+              className="w-64 h-64 object-contain" 
+            />
         </div>
+        {/* --- FIM DO AJUSTE --- */}
 
         {/* Text */}
         <div className="text-center space-y-2">
