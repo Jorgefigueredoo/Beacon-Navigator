@@ -14,6 +14,7 @@ import Turmas from "./pages/Turmas";
 import Perfil from "./pages/Perfil";
 import EditarPerfil from "./pages/EditarPerfil";
 import NotFound from "./pages/NotFound";
+import NovoBeacon from "./pages/NovoBeacon";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/turmas" element={<Turmas />} />
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/editar-perfil" element={<EditarPerfil />} />
+          <Route path="/novo-beacon" element={<NovoBeacon />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
