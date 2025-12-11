@@ -10,7 +10,7 @@ const Perfil = () => {
       {/* Header */}
       <div className="bg-primary pt-6 pb-12 px-4">
         <div className="flex items-center mb-6">
-          <button onClick={() => navigate(-1)} className="text-primary-foreground">
+          <button onClick={() => navigate("/dashboard")} className="text-primary-foreground">
             <ChevronLeft size={28} />
           </button>
           <h1 className="flex-1 text-center text-xl font-title font-semibold text-primary-foreground pr-7">
