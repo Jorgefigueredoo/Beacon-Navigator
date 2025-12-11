@@ -11,6 +11,8 @@ import Beacons from "./pages/Beacons";
 import LocalDetail from "./pages/LocalDetail";
 import Rotas from "./pages/Rotas";
 import Turmas from "./pages/Turmas";
+import Perfil from "./pages/Perfil";
+import EditarPerfil from "./pages/EditarPerfil";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +32,8 @@ const App = () => (
           <Route path="/local/:id" element={<LocalDetail />} />
           <Route path="/rotas" element={<Rotas />} />
           <Route path="/turmas" element={<Turmas />} />
+          <Route path="/perfil" element={<Perfil />} />
+          <Route path="/editar-perfil" element={<EditarPerfil />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
