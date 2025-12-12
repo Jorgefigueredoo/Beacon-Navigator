@@ -57,7 +57,7 @@ export default function Dashboard() {
         <div className="space-y-1">
           <p className="text-muted-foreground">Olá Larissa,</p>
           <h1 className="font-display text-xl">
-            como posso te ajudar?{" "}
+            para onde você quer ir?{" "}
             <span className="text-primary">Ative seu Beacon!</span>
           </h1>
         </div>
