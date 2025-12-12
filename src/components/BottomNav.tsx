@@ -1,4 +1,4 @@
-import { LayoutDashboard, Radio, Users, Navigation } from "lucide-react";
+import { LayoutDashboard, Radio, Users, Navigation, User } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 
 const navItems = [
@@ -6,6 +6,7 @@ const navItems = [
   { to: "/beacons", icon: Radio, label: "Beacons" },
   { to: "/turmas", icon: Users, label: "Turmas" },
   { to: "/rotas", icon: Navigation, label: "Rotas" },
+  { to: "/perfil", icon: User, label: "Perfil" },
 ];
 
 export function BottomNav() {
