@@ -1,7 +1,8 @@
-import { ChevronLeft, Radio, Bluetooth } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ChevronLeft, Radio, Bluetooth, Plus } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { BeaconCard } from "@/components/BeaconCard";
 import { BottomNav } from "@/components/BottomNav";
+import { Button } from "@/components/ui/button";
 
 const connectedBeacons = [
   { id: "1", name: "Praça Tybyra", status: "active" as const, image: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=100&h=100&fit=crop" },
@@ -16,13 +17,22 @@ const availableBeacons = [
 ];
 
 export default function Beacons() {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="flex items-center gap-4 p-4">
+      <header className="flex items-center justify-between p-4">
         <Link to="/dashboard" className="p-2 rounded-full hover:bg-secondary transition-colors">
           <ChevronLeft className="w-6 h-6" />
         </Link>
+        <Button 
+          onClick={() => navigate("/novo-beacon")}
+          className="bg-primary hover:bg-primary/90 text-primary-foreground"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Beacon
+        </Button>
       </header>
 
       <main className="px-4 space-y-6 animate-fade-in">
