@@ -1,55 +1,73 @@
-import { ChevronLeft, MapPin, Phone, Mail, Building, Navigation } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronLeft, Navigation, Loader2 } from "lucide-react"; // Adicionei Loader2
 import { Link, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BottomNav } from "@/components/BottomNav";
-
-const locais: Record<string, {
-  name: string;
-  image: string;
-  sobre: string[];
-  contato: { type: string; value: string }[];
-}> = {
-  "1": {
-    name: "Praça Tybyra",
-    image: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=800&h=400&fit=crop",
-    sobre: ["Localizada no centro histórico do Recife", "Espaço cultural e de lazer"],
-    contato: [{ type: "phone", value: "(81) 99999-9999" }],
-  },
-  "2": {
-    name: "Praça Marco Zero",
-    image: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&h=400&fit=crop",
-    sobre: ["Marco inicial de Recife", "Ponto turístico principal"],
-    contato: [{ type: "phone", value: "(81) 3355-9600" }],
-  },
-  "4": {
-    name: "Mirante do Paço",
-    image: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&h=400&fit=crop",
-    sobre: [
-      "Rooftop do estacionamento ao lado do Shopping Paço Alfândega, nas margens do Rio Capibaribe",
-      "Rooftop do estacionamento ao lado do Shopping Paço Alfândega",
-      "Nas margens do Rio Capibaribe",
-    ],
-    contato: [{ type: "whatsapp", value: "(81) 99663-8864" }],
-  },
-  "5": {
-    name: "Prefeitura do Recife",
-    image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop",
-    sobre: [
-      "Está localizada na Avenida Cais do Apolo, no Bairro do Recife",
-      "Possui 17 pavimentos",
-    ],
-    contato: [
-      { type: "phone", value: "Teleatendimento: 0800 281 0040, de segunda a sexta, das 8h às 17h" },
-      { type: "email", value: "ouvidoria@recife.pe.gov.br" },
-      { type: "address", value: "Sede da Prefeitura do Recife, de segunda a sexta, das 8h às 17h" },
-      { type: "mail", value: "Correspondência: Av. Cais do Apolo, 925, Térreo, Bairro do Recife, Recife / PE - CEP: 50030-903" },
-    ],
-  },
-};
+import { toast } from "sonner";
+import api from "../services/api"; // Importe sua API
 
 export default function LocalDetail() {
   const { id } = useParams();
-  const local = locais[id || "5"] || locais["5"];
+  const [local, setLocal] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function carregarDados() {
+      try {
+        // Busca o beacon pelo ID vindo da URL
+        const response = await api.get(`/beacons/${id}`);
+        const dados = response.data;
+
+        // ADAPTAÇÃO: Transforma os dados do Banco no formato visual da tela
+        // Se o seu backend retornar o objeto 'local' dentro do beacon, ajuste aqui (ex: dados.local.nome)
+        const objetoFormatado = {
+          name: dados.local?.nome || dados.nome || "Local sem nome",
+          image: dados.local?.imagemUrl || "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=800&h=400&fit=crop", // Imagem fallback
+          sobre: [
+            dados.descricao, // Descrição do Beacon
+            dados.local?.descricao // Descrição do Local (se houver)
+          ].filter(Boolean), // Remove itens vazios/nulos
+          contato: [
+            { type: "uuid", value: `UUID: ${dados.uuid}` },
+            { type: "status", value: `Status: ${dados.status}` }
+            // Adicione telefone aqui se o backend passar a enviar essa info
+          ]
+        };
+
+        setLocal(objetoFormatado);
+      } catch (error) {
+        console.error("Erro ao carregar detalhes:", error);
+        toast.error("Não foi possível carregar as informações.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (id) {
+      carregarDados();
+    }
+  }, [id]);
+
+  // Tela de Carregamento
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  // Tela de erro caso não encontre
+  if (!local) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <p className="text-muted-foreground mb-4">Local não encontrado.</p>
+        <Link to="/beacons">
+          <Button variant="outline">Voltar</Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -62,7 +80,8 @@ export default function LocalDetail() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
         <Link
-          to="/dashboard"
+          // Mudei para voltar para a lista de beacons, acho que faz mais sentido que dashboard
+          to="/beacons" 
           className="absolute top-4 left-4 p-2 rounded-full bg-background/50 backdrop-blur-sm hover:bg-background/70 transition-colors"
         >
           <ChevronLeft className="w-6 h-6" />
@@ -73,21 +92,23 @@ export default function LocalDetail() {
         <h1 className="font-display text-2xl font-bold">{local.name}</h1>
 
         {/* Sobre */}
-        <div className="space-y-2">
-          <h2 className="font-display font-semibold">Sobre:</h2>
-          <ul className="space-y-2">
-            {local.sobre.map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <span className="w-2 h-2 rounded-full bg-muted-foreground mt-1.5 flex-shrink-0" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {local.sobre.length > 0 && (
+          <div className="space-y-2">
+            <h2 className="font-display font-semibold">Sobre:</h2>
+            <ul className="space-y-2">
+              {local.sobre.map((item, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <span className="w-2 h-2 rounded-full bg-muted-foreground mt-1.5 flex-shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-        {/* Contato */}
+        {/* Contato / Informações Técnicas */}
         <div className="space-y-2">
-          <h2 className="font-display font-semibold">Contato:</h2>
+          <h2 className="font-display font-semibold">Informações:</h2>
           <ul className="space-y-2">
             {local.contato.map((item, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -100,7 +121,7 @@ export default function LocalDetail() {
 
         {/* Rotas Button */}
         <Button className="w-full" size="lg">
-          <Navigation className="w-5 h-5" />
+          <Navigation className="w-5 h-5 mr-2" />
           Rotas
         </Button>
       </main>
