@@ -4,7 +4,9 @@ import { Link, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BottomNav } from "@/components/BottomNav";
 import { toast } from "sonner";
-import api from "../services/api"; // Importe sua API
+import { api } from "@/services/api";
+
+
 
 export default function LocalDetail() {
   const { id } = useParams();

@@ -1,143 +1,200 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, Radio, Bluetooth, Plus } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import { BeaconCard } from "@/components/BeaconCard";
-import { BottomNav } from "@/components/BottomNav";
+import { useNavigate } from "react-router-dom";
+import { Plus, Search, Bluetooth } from "lucide-react";
+
+import { api } from "@/services/api";
+
 import { Button } from "@/components/ui/button";
-import { Beacon } from "@/types";
-import { toast } from "sonner";
-// CORREÇÃO 1: Caminho relativo para garantir que o Vite encontre o arquivo
-import api from '../services/api'; 
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
+type Beacon = {
+  id: number;
+  nome: string;
+  uuid: string;
+  status: string; // "ATIVADO" | "MANUTENCAO" | "DESATIVADO" etc
+};
 
 export default function Beacons() {
   const navigate = useNavigate();
+
   const [beacons, setBeacons] = useState<Beacon[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [busca, setBusca] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  async function carregarBeacons() {
+    setLoading(true);
+    setErro(null);
+
+    try {
+      const resposta = await api.get("/beacons");
+      const payload = resposta.data;
+
+      // Suporta vários formatos comuns de resposta
+      const lista: Beacon[] =
+        Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.content)
+          ? payload.content
+          : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload?.items)
+          ? payload.items
+          : [];
+
+      setBeacons(lista);
+    } catch (e: any) {
+      const status = e?.response?.status;
+      if (status) setErro(`Erro ao carregar beacons (HTTP ${status}).`);
+      else setErro("Não foi possível conectar ao servidor.");
+      setBeacons([]);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     carregarBeacons();
   }, []);
 
-  async function carregarBeacons() {
-    setLoading(true);
-    try {
-        const resposta = await api.get('/beacons');
-        setBeacons(resposta.data);
-    } catch (error) {
-        console.error("Erro ao carregar:", error);
-        toast.error("Erro ao buscar dados do servidor.");
-    } finally {
-        // CORREÇÃO 2: O finally garante que o loading suma mesmo com Erro 500
-        setLoading(false); 
-    }
-  }
+  const listaBeacons = Array.isArray(beacons) ? beacons : [];
 
-  // Separar beacons ativos dos inativos
-  const beaconsAtivos = beacons.filter(b => b.status === 'ATIVADO');
-  const beaconsDisponiveis = beacons.filter(b => b.status !== 'ATIVADO');
+  const termo = busca.trim().toLowerCase();
 
-  if (loading) {
+  const beaconsFiltrados = listaBeacons.filter((beacon) => {
+    if (!termo) return true;
     return (
-      <div className="min-h-screen bg-background pb-24 flex items-center justify-center">
-        <div className="text-center">
-          <Bluetooth className="w-12 h-12 text-primary animate-pulse mx-auto mb-4" />
-          <p className="text-muted-foreground">Carregando beacons...</p>
-        </div>
-      </div>
+      beacon.nome?.toLowerCase().includes(termo) ||
+      beacon.uuid?.toLowerCase().includes(termo) ||
+      String(beacon.id).includes(termo)
     );
-  }
+  });
+
+  const beaconsAtivos = beaconsFiltrados.filter((b) => b.status === "ATIVADO");
+  const beaconsDisponiveis = beaconsFiltrados.filter((b) => b.status !== "ATIVADO");
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "ATIVADO":
+        return <Badge className="bg-green-500">Ativo</Badge>;
+      case "MANUTENCAO":
+        return <Badge className="bg-yellow-500">Em manutenção</Badge>;
+      default:
+        return <Badge className="bg-red-500">Desativado</Badge>;
+    }
+  };
+
+  const BeaconCard = ({ beacon }: { beacon: Beacon }) => (
+    <Card
+      className="cursor-pointer hover:shadow-md transition-shadow"
+      onClick={() => navigate(`/local/${beacon.id}`)}
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Bluetooth className="h-5 w-5 text-primary" />
+              {beacon.nome}
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">UUID: {beacon.uuid}</p>
+          </div>
+          {getStatusBadge(beacon.status)}
+        </div>
+      </CardHeader>
+
+      <CardContent className="pt-0">
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-muted-foreground">ID: {beacon.id}</span>
+          <span className="text-muted-foreground">Status: {beacon.status}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <header className="flex items-center justify-between p-4">
-        <Link to="/dashboard" className="p-2 rounded-full hover:bg-secondary transition-colors">
-          <ChevronLeft className="w-6 h-6" />
-        </Link>
-        <Button 
-          onClick={() => navigate("/novo-beacon")}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Beacon
-        </Button>
-      </header>
-
-      <main className="px-4 space-y-6 animate-fade-in">
-        <div>
-          <h1 className="font-display text-2xl font-bold">Beacons</h1>
-          <p className="text-primary flex items-center gap-2">
-            <Bluetooth className="w-4 h-4" />
-            {beacons.length} Beacons Cadastrados
-          </p>
-        </div>
-
-        {/* Beacons Ativos */}
-        {beaconsAtivos.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-xs uppercase tracking-wider text-muted-foreground">
-              Beacons Ativos
-            </h2>
-            {beaconsAtivos.map((beacon, index) => (
-              <div
-                key={beacon.id}
-                className="animate-slide-up"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <BeaconCard
-                  id={beacon.id!.toString()}
-                  // CORREÇÃO 3: Proteção caso o beacon não tenha local (evita tela branca)
-                  name={beacon.local?.nome || "Local Desconhecido"}
-                  status="active"
-                  image={beacon.local?.imagemUrl}
-                />
-              </div>
-            ))}
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Beacons</h1>
+            <p className="text-muted-foreground">
+              Gerencie seus beacons e monitore o status.
+            </p>
           </div>
-        )}
 
-        {/* Outros Beacons */}
-        {beaconsDisponiveis.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-xs uppercase tracking-wider text-muted-foreground">
-              Outros Beacons
-            </h2>
-            {beaconsDisponiveis.map((beacon, index) => (
-              <div
-                key={beacon.id}
-                className="flex items-center gap-3 py-3 border-b border-border/50 animate-slide-up"
-                style={{ animationDelay: `${(index + beaconsAtivos.length) * 0.1}s` }}
-              >
-                <Radio className="w-5 h-5 text-muted-foreground" />
-                <span className="text-foreground">
-                    {beacon.local?.nome || "Local Desconhecido"}
-                </span>
-                <span className={`ml-auto text-xs px-2 py-1 rounded-full ${
-                  beacon.status === 'MANUNTENCAO' 
-                    ? 'bg-yellow-500/20 text-yellow-500' 
-                    : 'bg-red-500/20 text-red-500'
-                }`}>
-                  {beacon.status === 'MANUNTENCAO' ? 'Manutenção' : 'Desativado'}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={carregarBeacons} disabled={loading}>
+              {loading ? "Atualizando..." : "Atualizar"}
+            </Button>
 
-        {/* Lista Vazia */}
-        {beacons.length === 0 && (
-          <div className="text-center py-12">
-            <Radio className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">Nenhum beacon cadastrado</p>
-            <Button 
-              onClick={() => navigate("/novo-beacon")}
-              className="mt-4"
-            >
-              Adicionar Primeiro Beacon
+            <Button onClick={() => navigate("/novo-beacon")}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Beacon
             </Button>
           </div>
+        </div>
+
+        {/* Search */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome, UUID ou ID..."
+            className="pl-10"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </div>
+
+        {erro && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm">
+            {erro}
+          </div>
         )}
-      </main>
-      <BottomNav />
+
+        {/* Tabs */}
+        <Tabs defaultValue="ativos" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="ativos">Ativos ({beaconsAtivos.length})</TabsTrigger>
+            <TabsTrigger value="disponiveis">
+              Disponíveis ({beaconsDisponiveis.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="ativos">
+            {loading ? (
+              <p className="text-muted-foreground">Carregando...</p>
+            ) : beaconsAtivos.length === 0 ? (
+              <p className="text-muted-foreground">Nenhum beacon ativo encontrado.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {beaconsAtivos.map((beacon) => (
+                  <BeaconCard key={beacon.id} beacon={beacon} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="disponiveis">
+            {loading ? (
+              <p className="text-muted-foreground">Carregando...</p>
+            ) : beaconsDisponiveis.length === 0 ? (
+              <p className="text-muted-foreground">
+                Nenhum beacon disponível encontrado.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {beaconsDisponiveis.map((beacon) => (
+                  <BeaconCard key={beacon.id} beacon={beacon} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

@@ -1,19 +1,36 @@
-import axios from 'axios';
+import axios from "axios";
 
-const api = axios.create({
-  baseURL: 'http://localhost:8080',
-  headers: {
-    'Content-Type': 'application/json',
-  },
+export const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
-// Interceptor para adicionar token (quando implementar autenticação)
+// (Opcional) usar no login/logout
+export function setAuthToken(token: string) {
+  localStorage.setItem("token", token);
+}
+
+export function clearAuthToken() {
+  localStorage.removeItem("token");
+}
+
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
+
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    // Axios v1: headers é AxiosHeaders, use set()
+    config.headers.set("Authorization", `Bearer ${token}`);
   }
+
   return config;
 });
 
-export default api;
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      clearAuthToken();
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
