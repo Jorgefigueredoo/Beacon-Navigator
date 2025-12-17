@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, Bluetooth } from "lucide-react";
-import api from "@/services/api";
+import { api } from "@/services/api"; // Certifique-se que o caminho da api está correto
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { BottomNav } from "@/components/BottomNav"; // Importação do rodapé
 
 type Beacon = {
   id: number;
@@ -24,7 +25,6 @@ export default function Beacons() {
   async function carregarBeacons() {
     setLoading(true);
     try {
-      // CORREÇÃO: Chama /beacons/me para trazer só os meus
       const resposta = await api.get("/beacons/me"); 
       setBeacons(Array.isArray(resposta.data) ? resposta.data : []);
     } catch (e) {
@@ -40,14 +40,13 @@ export default function Beacons() {
   }, []);
 
   const beaconsFiltrados = beacons.filter((b) => 
-     b.nome.toLowerCase().includes(busca.toLowerCase()) || 
-     b.uuid.toLowerCase().includes(busca.toLowerCase())
+      b.nome.toLowerCase().includes(busca.toLowerCase()) || 
+      b.uuid.toLowerCase().includes(busca.toLowerCase())
   );
 
   const beaconsAtivos = beaconsFiltrados.filter((b) => b.status === "ATIVADO");
   const outrosBeacons = beaconsFiltrados.filter((b) => b.status !== "ATIVADO");
 
-  // Componente interno do Card
   const BeaconItem = ({ b }: { b: Beacon }) => (
     <Card className="cursor-pointer hover:shadow-md" onClick={() => navigate(`/local/${b.id}`)}>
       <CardHeader className="pb-2">
@@ -101,13 +100,8 @@ export default function Beacons() {
          </TabsContent>
       </Tabs>
       
-      {/* Menu Inferior Fixo */}
-      <div className="fixed bottom-0 left-0 right-0">
-          <div className="max-w-md mx-auto">
-             {/* Importe o BottomNav do seu projeto aqui se o layout quebrar */}
-             {/* <BottomNav /> */} 
-          </div>
-      </div>
+      {/* Menu Inferior Fixo adicionado corretamente */}
+      <BottomNav />
     </div>
   );
 }
