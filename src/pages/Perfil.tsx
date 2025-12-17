@@ -1,170 +1,236 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ChevronLeft,
-  Settings,
-  HelpCircle,
-  LogOut,
-  Pencil,
-  MapPin,
-  Navigation,
-  Users,
-  Bell,
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Pencil, 
+  ShieldAlert,
+  Loader2 // Ícone de carregamento
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { BottomNav } from "@/components/BottomNav";
+import { toast } from "sonner"; // Import para feedback visual
+import api from "../services/api"; // Sua conexão com o Back-end
 
-const Perfil = () => {
+const EditarPerfil = () => {
   const navigate = useNavigate();
+  
+  // Estados para Informações Pessoais
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [bio, setBio] = useState("");
+  const [telefone, setTelefone] = useState("");
+  
+  // No seu layout é um campo só, mas no banco são dois (Cidade e UF).
+  // Vamos tratar isso na hora de salvar/carregar.
+  const [localizacaoInput, setLocalizacaoInput] = useState(""); 
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login", { replace: true });
+  const [loading, setLoading] = useState(false);
+
+  // 1. CARREGAR DADOS AO ABRIR A TELA
+  useEffect(() => {
+    async function carregarDados() {
+      try {
+        const response = await api.get("/usuarios/me");
+        const dados = response.data;
+
+        // Preenche os campos
+        setNome(dados.nomeCompleto || "");
+        setEmail(dados.email || ""); // Email geralmente vem do usuário raiz
+        
+        if (dados.userProfile) {
+          setBio(dados.userProfile.biografia || "");
+          setTelefone(dados.userProfile.telefone || "");
+          
+          // Junta Cidade e UF para mostrar bonito no input (Ex: "Recife - PE")
+          const cidade = dados.userProfile.localizacao || "";
+          const uf = dados.userProfile.uf || "";
+          
+          if (cidade && uf) {
+            setLocalizacaoInput(`${cidade} - ${uf}`);
+          } else {
+            setLocalizacaoInput(cidade || uf || "");
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao carregar perfil:", error);
+        toast.error("Não foi possível carregar seus dados.");
+      }
+    }
+    carregarDados();
+  }, []);
+
+  // 2. SALVAR DADOS NO BANCO
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      // Separa o texto "Recife - PE" em Cidade e UF para o banco
+      let cidadeParaEnviar = localizacaoInput;
+      let ufParaEnviar = "";
+
+      // Tenta separar por traço (-) ou vírgula (,)
+      if (localizacaoInput.includes("-")) {
+        const partes = localizacaoInput.split("-");
+        cidadeParaEnviar = partes[0].trim();
+        ufParaEnviar = partes[1]?.trim() || "";
+      } else if (localizacaoInput.includes(",")) {
+        const partes = localizacaoInput.split(",");
+        cidadeParaEnviar = partes[0].trim();
+        ufParaEnviar = partes[1]?.trim() || "";
+      }
+
+      // Monta o objeto exatamente como o Java espera
+      const payload = {
+        nomeCompleto: nome,
+        userProfile: {
+          biografia: bio,
+          telefone: telefone,
+          localizacao: cidadeParaEnviar, 
+          uf: ufParaEnviar.substring(0, 2).toUpperCase() // Garante UF com 2 letras
+        }
+      };
+
+      // Envia para o Back-end
+      await api.put("/usuarios/me", payload);
+      
+      toast.success("Perfil atualizado com sucesso!");
+      navigate("/perfil"); // Volta para a tela anterior
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao salvar alterações. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <div className="bg-primary pt-6 pb-16 px-4">
+    <div className="min-h-screen bg-background flex flex-col pb-24">
+      
+      {/* Header - Mantendo seu layout exato */}
+      <div className="pt-6 pb-4 px-4">
         <div className="flex items-center mb-6">
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="text-primary-foreground"
-          >
+          <button onClick={() => navigate(-1)} className="text-foreground p-2 -ml-2">
             <ChevronLeft size={28} />
           </button>
-          <h1 className="flex-1 text-center text-xl font-title font-semibold text-primary-foreground pr-7">
-            Seu perfil
+          <h1 className="flex-1 text-center text-xl font-title font-semibold text-foreground pr-7">
+            Editar perfil
           </h1>
         </div>
-
-        <div className="flex flex-col items-center">
+        
+        {/* Foto de Perfil */}
+        <div className="flex justify-center mb-6">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center border-4 border-primary-foreground/20">
-              <div className="w-20 h-20 rounded-full bg-muted-foreground/30 flex items-center justify-center">
-                <svg
-                  width="48"
-                  height="48"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="text-muted-foreground/50"
-                >
-                  <circle cx="12" cy="8" r="4" fill="currentColor" />
-                  <path
-                    d="M4 20c0-4 4-6 8-6s8 2 8 6"
-                    fill="currentColor"
-                  />
+            <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center border-2 border-background shadow-lg">
+              <div className="w-full h-full rounded-full bg-muted-foreground/30 flex items-center justify-center overflow-hidden">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="text-muted-foreground/50">
+                  <circle cx="12" cy="8" r="4" fill="currentColor"/>
+                  <path d="M4 20c0-4 4-6 8-6s8 2 8 6" fill="currentColor"/>
                 </svg>
               </div>
             </div>
-            <button className="absolute bottom-0 right-0 w-8 h-8 bg-accent rounded-full flex items-center justify-center border-2 border-primary shadow-lg">
-              <Pencil size={14} className="text-accent-foreground" />
+            <button className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-md border-2 border-background">
+              <Pencil size={14} className="text-primary-foreground" />
             </button>
           </div>
-
-          <h2 className="mt-4 text-xl font-title font-semibold text-primary-foreground">
-            Larissa Monteiro
-          </h2>
-          <p className="text-primary-foreground/70 text-sm font-body">
-            larissa.monteiro@email.com
-          </p>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="px-4 -mt-8">
-        <div className="bg-card rounded-xl p-4 shadow-lg border border-border">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="flex flex-col items-center">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                <MapPin size={20} className="text-primary" />
-              </div>
-              <span className="text-lg font-title font-bold text-foreground">
-                12
-              </span>
-              <span className="text-xs text-muted-foreground font-body">
-                Beacons
-              </span>
-            </div>
+      {/* Form Area */}
+      <div className="flex-1 px-6 space-y-8 animate-fade-in">
+        
+        {/* SEÇÃO: DADOS PESSOAIS */}
+        <div className="space-y-5">
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Dados Pessoais</h2>
+          
+          <div>
+            <label className="block text-sm font-body text-foreground mb-1">Nome completo</label>
+            <Input
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Seu nome"
+              className="bg-transparent border-0 border-b border-border rounded-none px-0 h-9 focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50"
+            />
+          </div>
 
-            <div className="flex flex-col items-center">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                <Navigation size={20} className="text-primary" />
-              </div>
-              <span className="text-lg font-title font-bold text-foreground">
-                5
-              </span>
-              <span className="text-xs text-muted-foreground font-body">
-                Rotas
-              </span>
-            </div>
+          <div>
+            <label className="block text-sm font-body text-foreground mb-1">Biografia curta</label>
+            <Input
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Ex: Motorista profissional"
+              className="bg-transparent border-0 border-b border-border rounded-none px-0 h-9 focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50"
+            />
+          </div>
 
-            <div className="flex flex-col items-center">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                <Users size={20} className="text-primary" />
-              </div>
-              <span className="text-lg font-title font-bold text-foreground">
-                3
-              </span>
-              <span className="text-xs text-muted-foreground font-body">
-                Turmas
-              </span>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-body text-foreground mb-1">Telefone</label>
+              <Input
+                value={telefone}
+                onChange={(e) => setTelefone(e.target.value)}
+                placeholder="(00) 00000-0000"
+                className="bg-transparent border-0 border-b border-border rounded-none px-0 h-9 focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-body text-foreground mb-1">Cidade - UF</label>
+              <Input
+                value={localizacaoInput}
+                onChange={(e) => setLocalizacaoInput(e.target.value)}
+                placeholder="Recife - PE"
+                className="bg-transparent border-0 border-b border-border rounded-none px-0 h-9 focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50"
+              />
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Menu Options */}
-      <div className="flex-1 px-4 mt-6 space-y-4">
-        <div className="bg-card rounded-xl overflow-hidden border border-border">
-          <button
-            onClick={() => navigate("/editar-perfil")}
-            className="w-full flex items-center gap-3 px-4 py-4 text-left hover:bg-muted/50 transition-colors border-b border-border"
+          <div>
+            <label className="block text-sm font-body text-foreground mb-1">E-mail</label>
+            <Input
+              value={email}
+              // Email desabilitado para edição (padrão de segurança)
+              disabled 
+              className="bg-transparent border-0 border-b border-border rounded-none px-0 h-9 focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 opacity-60 cursor-not-allowed"
+            />
+          </div>
+        </div>
+
+        {/* SEÇÃO: SEGURANÇA */}
+        <div className="space-y-4 pt-4">
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
+            <ShieldAlert size={14} /> Segurança
+          </h2>
+
+          <button className="w-full flex items-center justify-between py-3 border-b border-border text-foreground hover:bg-white/5 transition-colors">
+            <span className="text-sm">Alterar senha de acesso</span>
+            <ChevronRight size={18} className="text-muted-foreground" />
+          </button>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-4 pt-4 pb-8">
+          <button 
+            onClick={() => navigate(-1)}
+            disabled={loading}
+            className="flex-1 py-3 text-muted-foreground text-sm font-medium hover:text-foreground transition-colors"
           >
-            <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center">
-              <Settings size={18} className="text-muted-foreground" />
-            </div>
-            <div className="flex-1">
-              <span className="text-foreground font-body font-medium">
-                Editar perfil
-              </span>
-              <p className="text-xs text-muted-foreground">
-                Alterar dados pessoais
-              </p>
-            </div>
+            Cancelar
           </button>
-
-          <button className="w-full flex items-center gap-3 px-4 py-4 text-left hover:bg-muted/50 transition-colors border-b border-border">
-            <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center">
-              <Bell size={18} className="text-muted-foreground" />
-            </div>
-            <div className="flex-1">
-              <span className="text-foreground font-body font-medium">
-                Notificações
-              </span>
-              <p className="text-xs text-muted-foreground">Gerenciar alertas</p>
-            </div>
-          </button>
-
-          <button className="w-full flex items-center gap-3 px-4 py-4 text-left hover:bg-muted/50 transition-colors">
-            <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center">
-              <HelpCircle size={18} className="text-muted-foreground" />
-            </div>
-            <div className="flex-1">
-              <span className="text-foreground font-body font-medium">
-                Suporte
-              </span>
-              <p className="text-xs text-muted-foreground">Ajuda e FAQ</p>
-            </div>
-          </button>
+          <Button 
+            onClick={handleSave}
+            disabled={loading}
+            className="flex-[2] rounded-full"
+            size="lg"
+          >
+            {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                </>
+            ) : (
+                "Salvar alterações"
+            )}
+          </Button>
         </div>
-
-        {/* LOGOUT FUNCIONAL */}
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 py-3 text-primary hover:text-primary/80 transition-colors bg-primary/10 rounded-xl"
-        >
-          <LogOut size={18} />
-          <span className="font-body font-medium">Sair da conta</span>
-        </button>
       </div>
 
       <BottomNav />
@@ -172,4 +238,4 @@ const Perfil = () => {
   );
 };
 
-export default Perfil;
+export default EditarPerfil;
