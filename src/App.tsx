@@ -118,13 +118,14 @@ const App = () => (
             }
           />
           <Route
-            path="/editar-perfil"
-            element={
-              <RequireAuth>
-                <EditarPerfil />
-              </RequireAuth>
-            }
-          />
+  path="/perfil/editar"
+  element={
+    <RequireAuth>
+      <EditarPerfil />
+    </RequireAuth>
+  }
+/>
+
           <Route
             path="/novo-beacon"
             element={
