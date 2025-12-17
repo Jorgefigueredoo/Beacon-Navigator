@@ -13,6 +13,7 @@ import Rotas from "./pages/Rotas";
 import Turmas from "./pages/Turmas";
 import Perfil from "./pages/Perfil";
 import EditarPerfil from "./pages/EditarPerfil";
+import AlterarSenha from "./pages/AlterarSenha";
 import NotFound from "./pages/NotFound";
 import NovoBeacon from "./pages/NovoBeacon";
 
@@ -109,6 +110,8 @@ const App = () => (
               </RequireAuth>
             }
           />
+
+          {/* Perfil */}
           <Route
             path="/perfil"
             element={
@@ -118,13 +121,21 @@ const App = () => (
             }
           />
           <Route
-  path="/perfil/editar"
-  element={
-    <RequireAuth>
-      <EditarPerfil />
-    </RequireAuth>
-  }
-/>
+            path="/perfil/editar"
+            element={
+              <RequireAuth>
+                <EditarPerfil />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/perfil/alterar-senha"
+            element={
+              <RequireAuth>
+                <AlterarSenha />
+              </RequireAuth>
+            }
+          />
 
           <Route
             path="/novo-beacon"

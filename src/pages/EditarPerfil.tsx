@@ -224,7 +224,7 @@ const EditarPerfil = () => {
               <button
                 type="button"
                 className="w-full flex items-center justify-between py-3 border-b border-border text-foreground hover:bg-white/5 transition-colors"
-                onClick={() => toast.message("Em breve", { description: "Alteração de senha." })}
+                onClick={() => navigate("/perfil/alterar-senha")}
               >
                 <span className="text-sm">Alterar senha de acesso</span>
                 <ChevronRight size={18} className="text-muted-foreground" />
