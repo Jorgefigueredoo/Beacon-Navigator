@@ -28,7 +28,7 @@ export default function Perfil() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [savingPhoto, setSavingPhoto] = useState(false);
 
-  // usado para forçar refresh do <img> após upload
+  // força refresh do avatar do backend (para evitar cache do navegador)
   const [avatarVersion, setAvatarVersion] = useState<number>(Date.now());
 
   useEffect(() => {
@@ -47,6 +47,7 @@ export default function Perfil() {
     carregar();
   }, []);
 
+  // limpa blob apenas quando o componente desmontar ou quando o preview mudar
   useEffect(() => {
     return () => {
       if (previewUrl?.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
@@ -89,6 +90,7 @@ export default function Perfil() {
       return;
     }
 
+    // troca preview
     if (previewUrl?.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
     setSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
@@ -114,12 +116,11 @@ export default function Perfil() {
       });
 
       const avatarUrl = resp.data?.avatarUrl;
+
       setDados((prev) => ({ ...(prev || {}), avatarUrl }));
-
-      // força o <img> a recarregar
-      setAvatarVersion(Date.now());
-
+      setAvatarVersion(Date.now()); // cache bust para URL http(s)
       cancelarFoto();
+
       toast.success("Foto atualizada com sucesso.");
     } catch (e) {
       console.error(e);
@@ -129,25 +130,26 @@ export default function Perfil() {
     }
   }
 
-  // monta URL absoluta baseada no axios baseURL
-  const apiBase = (api.defaults.baseURL || "").replace(/\/$/, "");
+  // base do backend vinda do axios (ou ajuste manual se necessário)
+  const apiBase = (api.defaults.baseURL || "http://localhost:8080").replace(/\/$/, "");
+
   const avatarFromBackend = useMemo(() => {
     if (!dados?.avatarUrl) return null;
 
-    const raw = dados.avatarUrl;
-    if (raw.startsWith("http")) return raw;
-
-    // Se vier "/uploads/...", vira "http://localhost:8080/uploads/..."
-    if (raw.startsWith("/")) return `${apiBase}${raw}`;
-    return `${apiBase}/${raw}`;
+    if (dados.avatarUrl.startsWith("http")) return dados.avatarUrl;
+    if (dados.avatarUrl.startsWith("/")) return `${apiBase}${dados.avatarUrl}`;
+    return `${apiBase}/${dados.avatarUrl}`;
   }, [dados?.avatarUrl, apiBase]);
 
-  const avatarToShow = previewUrl || avatarFromBackend || null;
+  // prioridade: preview (blob) > backend
+  const rawAvatar = previewUrl || avatarFromBackend || null;
 
-  // adiciona cache-bust
-  const avatarSrc = avatarToShow
-    ? `${avatarToShow}${avatarToShow.includes("?") ? "&" : "?"}v=${avatarVersion}`
-    : null;
+  // IMPORTANTÍSSIMO: só adiciona ?v= em http(s). Nunca em blob:
+  const avatarSrc = useMemo(() => {
+    if (!rawAvatar) return null;
+    if (rawAvatar.startsWith("blob:")) return rawAvatar;
+    return `${rawAvatar}${rawAvatar.includes("?") ? "&" : "?"}v=${avatarVersion}`;
+  }, [rawAvatar, avatarVersion]);
 
   return (
     <div className="min-h-screen bg-[#0b0b0d] text-white flex flex-col pb-24">
@@ -171,7 +173,7 @@ export default function Perfil() {
 
           <div className="mt-8 flex flex-col items-center">
             <div className="relative">
-              {/* CÍRCULO: overflow-hidden garante recorte */}
+              {/* círculo com recorte */}
               <div className="h-24 w-24 rounded-full bg-white/25 overflow-hidden flex items-center justify-center">
                 {avatarSrc ? (
                   <img
